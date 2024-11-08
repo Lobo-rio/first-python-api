@@ -26,10 +26,25 @@ def get_users():
 def create_user():
     name = request.json['name']
     email = request.json['email']
+
+    user_existed = Users.query.filter_by(email = email).first()
+    if user_existed:
+        return jsonify({'error': 'User already exists!'}), 400
+    
     user = Users(name=name, email=email)
     db.session.add(user)
     db.session.commit()
-    return jsonify(user.to_dict())
+    return jsonify(user.to_dict()), 201
+
+@app.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user_existed = Users.query.filter_by(id = user_id).first()
+    if not user_existed:
+        return jsonify({'error': 'User does not exist!'}), 404
+    
+    db.session.delete(user_existed)
+    db.session.commit()
+    return jsonify({'message': 'User deleted successfully!'}), 200
 
 if __name__ == '__main__':
     with app.app_context():
