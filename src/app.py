@@ -20,9 +20,18 @@ class Users(db.Model):
 @app.route('/users', methods=['GET'])
 def get_users():
     users = Users.query.all()
+    
     return jsonify([user.to_dict() for user in users])
 
-@app.route('/users', methods=['POST'])
+@app.route('/user/<int:user_id>', methods=['GET'])
+def getby_user(user_id):
+    user_existed = Users.query.get(user_id)
+    if not user_existed:
+        return jsonify({'error': 'User does not exist!'}), 404
+    
+    return jsonify([user_existed.to_dict()]), 200
+
+@app.route('/user', methods=['POST'])
 def create_user():
     name = request.json['name']
     email = request.json['email']
@@ -34,16 +43,30 @@ def create_user():
     user = Users(name=name, email=email)
     db.session.add(user)
     db.session.commit()
+
     return jsonify(user.to_dict()), 201
 
-@app.route('/users/<int:user_id>', methods=['DELETE'])
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user_existed = Users.query.get(user_id)
+    if not user_existed:
+        return jsonify({'error': 'User does not exist!'}), 404
+    
+    user_existed.name = request.json['name']
+    user_existed.email = request.json['email']
+    db.session.commit()
+
+    return jsonify(user_existed.to_dict()), 200
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    user_existed = Users.query.filter_by(id = user_id).first()
+    user_existed = Users.query.get(user_id)
     if not user_existed:
         return jsonify({'error': 'User does not exist!'}), 404
     
     db.session.delete(user_existed)
     db.session.commit()
+
     return jsonify({'message': 'User deleted successfully!'}), 200
 
 if __name__ == '__main__':
